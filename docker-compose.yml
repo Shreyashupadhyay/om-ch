@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: strangerchat-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-strangerchat}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-1234}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-strangerchat}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - strangerchat-net
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: strangerchat-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@strangerchat.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASS:-admin123}
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - strangerchat-net
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  strangerchat-net:
+    driver: bridge
